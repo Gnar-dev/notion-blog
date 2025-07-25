@@ -50,7 +50,7 @@ function getPostMetadata(page: PageObjectResponse): Post {
         ? properties.Tags.multi_select.map((tag) => tag.name)
         : [],
     author:
-      properties.Author.type === 'people'
+      properties.Author.type === 'people' && properties.Author.people.length > 0
         ? ((properties.Author.people[0] as PersonUserObjectResponse)?.name ?? '')
         : '',
     date: properties.Date.type === 'date' ? (properties.Date.date?.start ?? '') : '',
