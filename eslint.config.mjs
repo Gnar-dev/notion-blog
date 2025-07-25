@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url';
 import { FlatCompat } from '@eslint/eslintrc';
 import js from '@eslint/js';
 import globals from 'globals';
-import someConfig from 'some-other-config-you-use';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,7 +28,7 @@ const eslintConfig = [
       // - TypeScript, React, Next.js, Prettier와의 호환성을 고려합니다.
 
       // 타입스크립트 관련 규칙
-      '@typescript-eslint/explicit-function-return-type': 'warn', // 함수 반환 타입 명시 권장
+      '@typescript-eslint/explicit-function-return-type': 'off', // 함수 반환 타입 명시 (선택사항)
       '@typescript-eslint/no-explicit-any': 'warn', // any 사용 경고
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }], // 사용하지 않는 변수 경고, _로 시작하면 무시
 
@@ -41,7 +40,7 @@ const eslintConfig = [
       'react/prop-types': 'off', // TypeScript 사용 시 prop-types 불필요
 
       // 코드 스타일 및 가독성
-      'prettier/prettier': 'warn', // Prettier 포맷팅 권장
+      // 'prettier/prettier': 'warn', // Prettier 포맷팅 권장 (플러그인 설치 필요)
       quotes: ['warn', 'single', { avoidEscape: true }], // 작은따옴표 권장
       semi: ['warn', 'always'], // 세미콜론 사용 권장
       'comma-dangle': ['warn', 'always-multiline'], // 멀티라인에서 trailing comma 권장
@@ -64,4 +63,4 @@ const eslintConfig = [
   eslintConfigPrettier,
 ];
 
-export default someConfig;
+export default eslintConfig;

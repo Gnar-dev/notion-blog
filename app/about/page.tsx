@@ -1,7 +1,3 @@
-import Footer from '@/components/layouts/Footer';
-import Header from '@/components/layouts/Header';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-
 export default function About() {
   return (
     <div className="container py-8">

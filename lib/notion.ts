@@ -7,6 +7,14 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints';
 import { NotionToMarkdown } from 'notion-to-md';
 
+if (!process.env.NOTION_TOKEN) {
+  throw new Error('NOTION_TOKEN environment variable is not set');
+}
+
+if (!process.env.NOTION_DATABASE_ID) {
+  throw new Error('NOTION_DATABASE_ID environment variable is not set');
+}
+
 export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
 });
@@ -60,75 +68,85 @@ export const getPostBySlug = async (
   markdown: string;
   post: Post;
 }> => {
-  const response = await notion.databases.query({
-    database_id: process.env.NOTION_DATABASE_ID!,
-    filter: {
-      and: [
-        {
-          property: 'Slug',
-          rich_text: {
-            equals: slug,
+  try {
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_DATABASE_ID!,
+      filter: {
+        and: [
+          {
+            property: 'Slug',
+            rich_text: {
+              equals: slug,
+            },
           },
-        },
-        {
-          property: 'Status',
-          select: {
-            equals: 'Published',
+          {
+            property: 'Status',
+            select: {
+              equals: 'Published',
+            },
           },
-        },
-      ],
-    },
-  });
+        ],
+      },
+    });
 
-  // 포스트를 찾지 못한 경우 404 페이지로 리다이렉트
-  if (!response.results || response.results.length === 0) {
+    // 포스트를 찾지 못한 경우 404 페이지로 리다이렉트
+    if (!response.results || response.results.length === 0) {
+      notFound();
+    }
+
+    const page = response.results[0] as PageObjectResponse;
+    const mdBlocks = await n2m.pageToMarkdown(page.id);
+    const { parent } = n2m.toMarkdownString(mdBlocks);
+
+    return {
+      markdown: parent,
+      post: getPostMetadata(page),
+    };
+  } catch (error) {
+    console.error('Notion API 호출 중 오류 발생:', error);
     notFound();
   }
-
-  const page = response.results[0] as PageObjectResponse;
-  const mdBlocks = await n2m.pageToMarkdown(page.id);
-  const { parent } = n2m.toMarkdownString(mdBlocks);
-
-  return {
-    markdown: parent,
-    post: getPostMetadata(page),
-  };
 };
 
 export const getPublishedPosts = async (tag?: string): Promise<Post[]> => {
-  const response = await notion.databases.query({
-    database_id: process.env.NOTION_DATABASE_ID!,
-    filter: {
-      and: [
-        {
-          property: 'Status',
-          select: {
-            equals: 'Published',
+  try {
+    const response = await notion.databases.query({
+      database_id: process.env.NOTION_DATABASE_ID!,
+      filter: {
+        and: [
+          {
+            property: 'Status',
+            select: {
+              equals: 'Published',
+            },
           },
-        },
-        ...(tag && tag !== '전체'
-          ? [
-              {
-                property: 'Tags',
-                multi_select: {
-                  contains: tag,
+          ...(tag && tag !== '전체'
+            ? [
+                {
+                  property: 'Tags',
+                  multi_select: {
+                    contains: tag,
+                  },
                 },
-              },
-            ]
-          : []),
-      ],
-    },
-    sorts: [
-      {
-        property: 'Date',
-        direction: 'descending',
+              ]
+            : []),
+        ],
       },
-    ],
-  });
+      sorts: [
+        {
+          property: 'Date',
+          direction: 'descending',
+        },
+      ],
+    });
 
-  return response.results
-    .filter((page): page is PageObjectResponse => 'properties' in page)
-    .map(getPostMetadata);
+    return response.results
+      .filter((page): page is PageObjectResponse => 'properties' in page)
+      .map(getPostMetadata);
+  } catch (error) {
+    console.error('Notion API 호출 중 오류 발생:', error);
+    return []; // 빈 배열 반환하여 빌드 실패 방지
+  }
 };
 
 export const getTags = async (): Promise<TagFilterItem[]> => {
